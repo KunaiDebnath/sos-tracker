@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live SOS Tracker</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; width: 100vw; }
+  </style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+ const firebaseConfig = {
+  apiKey: "AIzaSyCsSB1jpCA7wqVGsjRd8k86r3Gc6veGWCg",
+  authDomain: "sostracker-767cb.firebaseapp.com",
+  databaseURL: "https://sostracker-767cb-default-rtdb.firebaseio.com",
+  projectId: "sostracker-767cb",
+  storageBucket: "sostracker-767cb.firebasestorage.app",
+  messagingSenderId: "521707072663",
+  appId: "1:521707072663:web:a3f9e41ce8a1ae2a708dd2"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const userId = new URLSearchParams(window.location.search).get("id") || "user1";
+
+  const map = L.map("map").setView([20.5937, 78.9629], 5);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19
+  }).addTo(map);
+
+  const marker = L.marker([20.5937, 78.9629]).addTo(map);
+
+  db.ref("locations/" + userId).on("value", snapshot => {
+    const data = snapshot.val();
+
+    if (data && data.lat && data.lng) {
+      const pos = [data.lat, data.lng];
+      marker.setLatLng(pos);
+      map.setView(pos, 16);
+    }
+  });
+</script>
+</body>
+</html>
