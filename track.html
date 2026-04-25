@@ -29,28 +29,55 @@
   appId: "1:521707072663:web:a3f9e41ce8a1ae2a708dd2"
 };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  const userId = new URLSearchParams(window.location.search).get("id") || "user1";
+const userId = new URLSearchParams(window.location.search).get("id") || "user1";
 
-  const map = L.map("map").setView([20.5937, 78.9629], 5);
+const map = L.map("map").setView([20.5937, 78.9629], 5);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19
-  }).addTo(map);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19
+}).addTo(map);
 
-  const marker = L.marker([20.5937, 78.9629]).addTo(map);
+// current location marker
+const marker = L.marker([20.5937, 78.9629]).addTo(map);
 
-  db.ref("locations/" + userId).on("value", snapshot => {
-    const data = snapshot.val();
+// route line
+const routeLine = L.polyline([], {
+  color: "red",
+  weight: 4
+}).addTo(map);
+
+// latest live location
+db.ref("locations/" + userId).on("value", snapshot => {
+  const data = snapshot.val();
+
+  if (data && data.lat && data.lng) {
+    const pos = [data.lat, data.lng];
+    marker.setLatLng(pos);
+    map.setView(pos, 16);
+  }
+});
+
+// full route path
+db.ref("routes/" + userId).on("value", snapshot => {
+  const points = [];
+
+  snapshot.forEach(child => {
+    const data = child.val();
 
     if (data && data.lat && data.lng) {
-      const pos = [data.lat, data.lng];
-      marker.setLatLng(pos);
-      map.setView(pos, 16);
+      points.push([data.lat, data.lng]);
     }
   });
+
+  routeLine.setLatLngs(points);
+
+  if (points.length > 1) {
+    map.fitBounds(routeLine.getBounds());
+  }
+});
 </script>
 </body>
 </html>
